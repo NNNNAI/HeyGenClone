@@ -9,9 +9,9 @@ pip install deepface
 pip install numpy==1.22.2
 pip install transformers
 pip install pydub
-pip install basicsr
+pip install basicsr -i https://mirrors.aliyun.com/pypi/simple  --use-deprecated legacy-resolver
 pip install facexlib
-pip install gfpgan
+pip install gfpgan -i https://mirrors.aliyun.com/pypi/simple  --use-deprecated legacy-resolver
 pip install audiostretchy
 pip install numpy==1.22.2
 pip install ctranslate2

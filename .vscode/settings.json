@@ -1,0 +1,9 @@
+{
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "python.analysis.exclude":[
+        "**/work_dirs/**",
+        "**/data/**",
+        "**/docs/**",
+        "**/tests/**",
+    ],
+}

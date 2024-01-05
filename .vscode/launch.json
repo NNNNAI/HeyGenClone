@@ -1,0 +1,84 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "preLaunchTask": "Download model zoo"
+        } ,
+        {
+            "name": "test",
+            "type": "python",
+            "request": "launch",
+            "program": "translate.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/workspaces/Torch21/test/src.mp4","zh-cn", "-o",
+                "/workspaces/Torch21/test/src_out.mp4",
+            ],
+            "justMyCode": false,
+        },
+        {
+            "name": "test_guailin",
+            "type": "python",
+            "request": "launch",
+            "program": "translate.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/workspaces/Torch21/videos/guailin_30s.mp4","chinese", "-o",
+                "/workspaces/Torch21/videos/guailin_30s_heygenclone.mp4",
+            ],
+            "justMyCode": false,
+            "env":{
+                "CUDA_VISIBLE_DEVICES": "3"
+            }
+        },
+        {
+            "name": "inference",
+            "type": "python",
+            "request": "launch",
+            "cwd": "/workspaces/Torch21/video-retalking",
+            "program": "inference.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--face=/workspaces/Torch21/test/yuhuidong.mp4","--audio=/workspaces/Torch21/tmp_lny/tmpus15cir2.wav", 
+                "--outfile=/workspaces/Torch21/test/yuhuidong_myheygen.mp4","--LNet_batch_size=16"
+            ],
+            "justMyCode": false,
+
+        },
+
+        {
+            "name": "inference_videoretalking_video",
+            "type": "python",
+            "request": "launch",
+            "program": "translate.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/workspaces/Torch21/examples/face/1.mp4","chinese", "-o",
+                "/workspaces/Torch21/examples/face/1_heygenclone_video_retalking.mp4"
+            ],
+            "justMyCode": false,
+
+        },
+        {
+            "name": "test_yuhuidong",
+            "type": "python",
+            "request": "launch",
+            "program": "translate.py",
+            "console": "integratedTerminal",
+            "args": [
+                "/workspaces/Torch21/videos/yuhuidong_trim.mp4","english", "-o",
+                "/workspaces/Torch21/videos/yuhuidong_trim_heygenclone.mp4",
+            ],
+            "justMyCode": false,
+        },
+    ]
+}

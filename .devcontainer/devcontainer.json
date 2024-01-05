@@ -1,0 +1,44 @@
+
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
+{
+	"name": "torch21",
+	"build": {
+		// Sets the run context to one level up instead of the .devcontainer folder.
+		"context": "..",
+		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+		"dockerfile": "../docker/Dockerfile",
+		// "target": "production",
+		// "target": "encryption"
+		"target": "development",
+		"args": {
+			"USER_UID":"${localEnv:HOST_USER_ID}"
+		}
+	},
+	// "workspaceFolder": "/ocr_gdd",
+	// "workspaceMount": "source=${localWorkspaceFolder},target=/ocr_gdd,type=bind,consistency=cached",
+	"runArgs": [
+		"--gpus",
+		"all",
+		"--shm-size=16g"
+	],
+	"mounts": [
+		"source=${localEnv:HOME}/gddi-nas,target=/gddi-nas,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/ml-data,target=/ml-data,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/.ssh,target=/home/myuser/.ssh,type=bind,consistency=cached",
+		"source=${localEnv:HOME}/nfs,target=/nfs,type=bind,consistency=cached"
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"charliermarsh.ruff",
+				"lfs.vscode-emacs-friendly",
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"GitHub.copilot",
+				"redjue.git-commit-plugin",
+				"sourcery.sourcery"
+			]
+		}
+	}
+}

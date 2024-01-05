@@ -67,9 +67,9 @@ class Engine:
         speakers, lang = self.transcribe_audio_extended(
             dereverb_out['voice_file'])
 
-        if not lang in DEFAULT_VIDEO_LANGS:
-            raise Exception(
-                f'Invalid video language: {lang.lower()} detected, currently supported only {", ".join(DEFAULT_VIDEO_LANGS)}')
+        # if not lang in DEFAULT_VIDEO_LANGS:
+        #     raise Exception(
+        #         f'Invalid video language: {lang.lower()} detected, currently supported only {", ".join(DEFAULT_VIDEO_LANGS)}')
         # ---------------------------------------------------------------------------------------------------
 
         # [Step 2] Getting voice segments, frames, do face detection + reidentification ---------------------
@@ -108,6 +108,7 @@ class Engine:
         for speaker in speakers:
             if 'id' in speaker:
                 voice = merged_voices[speaker['id']]
+            # 如果没有id那就是没有露脸的，只有人声
             else:
                 voice = voice_audio[speaker['start']
                                     * 1000: speaker['end'] * 1000]
@@ -116,7 +117,7 @@ class Engine:
             voice.export(voice_wav, format='wav')
 
             dst_text = self.text_helper.translate(
-                speaker['text'], src_lang=lang, dst_lang=self.output_language)
+                speaker['text'], dst_lang=self.output_language)
 
             sub_voice = voice_audio[speaker['start'] * 1000: speaker['end'] * 1000]
             sub_voice_wav = self.temp_manager.create_temp_file(

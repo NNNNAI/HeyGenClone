@@ -2,14 +2,17 @@ import argparse
 import json
 from core.engine import Engine
 from core.mapper import get_languages
-
+import time
 with open('config.json', 'r') as f:
     config = json.load(f)
 
 
 def translate(video_filename, output_language, output_filename):
     engine = Engine(config, output_language)
+    
+    start_time = time.time()
     engine(video_filename, output_filename)
+    print("总消耗时间: ", time.time() - start_time)
 
 
 if __name__ == '__main__':
