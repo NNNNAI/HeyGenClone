@@ -12,6 +12,7 @@ from third_part.face3d.models import networks
 import warnings
 warnings.filterwarnings("ignore")
 
+
 def options():
     parser = argparse.ArgumentParser(description='Inference code to lip-sync videos in the wild using Wav2Lip models')
 
@@ -146,6 +147,50 @@ def face_detect(images, args, jaw_correction=False, detector=None):
     torch.cuda.empty_cache()
     return results 
 
+def face_detect_with_spec_coords(images, coords_list, face_det_batch_size, pads=None, jaw_correction=False, detector=None):
+    if detector == None:
+        device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        detector = face_detection.FaceAlignment(face_detection.LandmarksType._2D, 
+                                                flip_input=False, device=device)
+
+    batch_size = face_det_batch_size    
+    while 1:
+        predictions = []
+        try:
+            for i in tqdm(range(0, len(images), batch_size),desc='FaceDet:'):
+                predictions.extend(detector.get_detections_for_batch_withcoords(np.array(images[i:i + batch_size]),coords_list[i:i + batch_size]))
+        except RuntimeError:
+            if batch_size == 1: 
+                raise RuntimeError('Image too big to run face detection on GPU. Please use the --resize_factor argument')
+            batch_size //= 2
+            print('Recovering from OOM error; New batch size: {}'.format(batch_size))
+            continue
+        break
+
+    results = []
+    pady1, pady2, padx1, padx2 = (0,20,0,0)
+    for rect, image in zip(predictions, images):
+        if rect is None:
+            cv2.imwrite('temp/faulty_frame.jpg', image) # check this frame where the face was not detected.
+            raise ValueError('Face not detected! Ensure the video contains a face in all the frames.')
+
+        y1 = max(0, rect[1] - pady1)
+        y2 = min(image.shape[0], rect[3] + pady2)
+        x1 = max(0, rect[0] - padx1)
+        x2 = min(image.shape[1], rect[2] + padx2)
+        results.append([x1, y1, x2, y2])
+
+    boxes = np.array(results)
+    boxes = get_smoothened_boxes(boxes, T=5)
+    results = []
+    for image, (x1, y1, x2, y2) in zip(images, boxes):
+        results.append([image[y1: y2, x1:x2], (y1, y2, x1, x2)])
+    # results = [[image[y1: y2, x1:x2], (y1, y2, x1, x2)] for image, (x1, y1, x2, y2) in zip(images, boxes)]
+
+    del detector
+    torch.cuda.empty_cache()
+    return results 
+
 def _load(checkpoint_path, device):
     if device == 'cuda':
         checkpoint = torch.load(checkpoint_path)
@@ -220,9 +265,9 @@ def Laplacian_Pyramid_Blending_with_mask(A, B, m, num_levels = 6):
         ls_ = cv2.add(ls_, LS[i])
     return ls_
 
-def load_model(args, device):
-    D_Net = load_DNet(args).to(device)
-    model = load_network(args).to(device)
+def load_model(DNet_path,LNet_path,ENet_path, device):
+    D_Net = load_DNet(DNet_path).to(device)
+    model = load_network(LNet_path,ENet_path).to(device)
     return D_Net, model
 
 def normalize_kp(kp_source, kp_driving, kp_driving_initial, adapt_movement_scale=False,

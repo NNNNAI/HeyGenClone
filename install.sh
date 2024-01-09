@@ -26,3 +26,5 @@ pip install ninja==1.10.2.3
 pip install dlib --verbose
 pip install googletrans==3.1.0a0
 pip install numpy==1.23
+pip install kornia==0.5.1
+pip install librosa==0.9.2

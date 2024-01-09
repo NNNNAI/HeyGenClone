@@ -32,7 +32,7 @@ def merge(audio_filename, avi_filename, out_filename):
     if audio_duration > video_duration:
         temp_manager = TempFileManager()
         temp_wav = temp_manager.create_temp_file(suffix='.wav').name
-        command = 'ffmpeg -i {} -ss 00:00:00 -to {} -c copy {}'.format(
+        command = 'ffmpeg -i {} -ss 00:00:00 -to {} -c copy {} -y'.format(
             audio_filename, duration, temp_wav
         )
         subprocess.call(command, shell=True)

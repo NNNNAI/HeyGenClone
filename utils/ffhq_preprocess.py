@@ -30,6 +30,24 @@ import numpy as np
 from PIL import Image
 import dlib
 
+# rect1/rect2 is [x_top_left,y_top_left,x_bottom_right,y_bottom_right]
+def get_iou(rect1, rec1):
+    x1, x2, y1, y2 = rect1
+    xx1, xx2, yy1, yy2 = rec1
+    # determine the coordinates of the intersection rectangle
+    x_left = max(x1, xx1)
+    y_top = max(y1, yy1)
+    x_right = min(x2, xx2)
+    y_bottom = min(y2, yy2)
+    if x_right < x_left or y_bottom < y_top:
+        return 0.0
+    intersection_area = (x_right - x_left) * (y_bottom - y_top)
+    # compute the area of both rectangles
+    bb1_area = (x2 - x1) * (y2 - y1)
+    bb2_area = (xx2 - xx1) * (yy2 - yy1)
+    # compute the intersection over union by taking the intersection area and dividing it by the sum of prediction + ground-truth areas - the interesection area
+    iou = intersection_area / float(bb1_area + bb2_area - intersection_area)
+    return iou
 
 class Croper:
     def __init__(self, path_of_lm):
@@ -45,6 +63,31 @@ class Croper:
         if len(dets) == 0:
             return None
         d = dets[0]
+        # Get the landmarks/parts for the face in box d.
+        shape = self.predictor(img_np, d)
+        t = list(shape.parts())
+        a = []
+        for tt in t:
+            a.append([tt.x, tt.y])
+        lm = np.array(a)
+        return lm
+    def get_uni_landmark_withcoord(self, img_np, coord):
+        """get landmark with dlib
+        :return: np.array shape=(68, 2)
+        """
+        detector = dlib.get_frontal_face_detector()
+        dets = detector(img_np, 1)
+        assert len(dets) > 0, "[get_uni_landmark_withcoord]:face should be contain in this frame due to the face preprocesser"
+        
+        max_iou = -1
+        cur_d = None
+        for i in range(len(dets)):
+            cur_xyxy = [dets[i].tl_corner().x, dets[i].tl_corner().y, dets[i].br_corner().x, dets[i].br_corner().y]
+            cur_iou = get_iou(cur_xyxy, coord)
+            if cur_iou > max_iou:
+                max_iou = cur_iou
+                cur_d = dets[i]
+        d = cur_d
         # Get the landmarks/parts for the face in box d.
         shape = self.predictor(img_np, d)
         t = list(shape.parts())
@@ -136,5 +179,30 @@ class Croper:
             _inp = _inp[ly:ry, lx:rx]
             img_np_list[_i] = _inp
         return img_np_list, crop, quad
+    
+    def crop_eachframe(self, img_np_list, coords_list, xsize=512):    # first frame for all video
+        
+        crop_list = []
+        quad_list = []
+        for _i in tqdm(range(len(img_np_list)),desc="crop_eachframe"):
+            img_np = img_np_list[_i]
+            coord = coords_list[_i]
+            lm = self.get_uni_landmark_withcoord(img_np,coord)
+            assert lm is not None, "[crop_eachframe],face should be contain in this frame due to the face preprocesser"
+        
+            crop, quad = self.align_face(img=Image.fromarray(img_np), lm=lm, output_size=xsize)
+            clx, cly, crx, cry = crop
+            lx, ly, rx, ry = quad
+            lx, ly, rx, ry = int(lx), int(ly), int(rx), int(ry)
+            
+            _inp = img_np_list[_i]
+            _inp = _inp[cly:cry, clx:crx]
+            _inp = _inp[ly:ry, lx:rx]
+            img_np_list[_i] = _inp
+            
+            crop_list.append(crop)
+            quad_list.append(quad)
+            
+        return img_np_list, crop_list, quad_list
 
 

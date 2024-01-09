@@ -24,7 +24,8 @@ import torch
 from itertools import groupby
 import numpy as np
 from moviepy.video.io.VideoFileClip import VideoFileClip
-
+from inference import VideoRetalking
+import os
 
 class Engine:
     def __init__(self, config, output_language):
@@ -45,13 +46,15 @@ class Engine:
         self.text_helper = TextHelper()
         self.temp_manager = TempFileManager()
         self.scene_processor = ScenePreprocessor(config)
-        self.lip_sync = LipSync()
+        # self.lip_sync = LipSync()
+        self.lip_sync = VideoRetalking()
         self.dereverb = MDXNetDereverb(15)
         self.use_enhancer = config['USE_ENHANCER']
         self.add_subtitles = config['ADD_SUBTITLES']
 
-    def __call__(self, video_file_path, output_file_path):
+    def __call__(self, video_file_path, output_file_path, LNet_batch_size, face_det_batch_size):
         # [Step 1] Reading the video, getting audio (voice + noise), as well as the text of the voice -------
+        base_name = os.path.basename(video_file_path)
         orig_clip = VideoFileClip(video_file_path, verbose=False)
         original_audio_file = self.temp_manager.create_temp_file(
             suffix='.wav').name
@@ -168,8 +171,9 @@ class Engine:
         frames = to_extended_frames(
             frames, speakers, orig_clip.fps, self.scene_processor.get_face_on_frame)
         self.scene_processor.close()
-        frames = self.lip_sync.sync(
-            frames, speech_audio_wav, orig_clip.fps, self.use_enhancer)
+        # frames = self.lip_sync.sync(
+        #     frames, speech_audio_wav, orig_clip.fps, self.use_enhancer)
+        frames = self.lip_sync.sync(frames, speech_audio_wav, orig_clip.fps, LNet_batch_size, face_det_batch_size, base_name)
         # ---------------------------------------------------------------------------------------------------
 
         # [Step 7] Merging speech voice and noise, creating output ------------------------------------------
